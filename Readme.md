@@ -11,6 +11,10 @@ We can also create custom policies where permissions for any sevice can be custo
 
 - [Grant IAM policy to resources](./step12_grant_iam_policy_to_resources)
 
+## Reading Material
+
+- [AWS Identity and Access Management Construct Library](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-iam-readme.html)
+
 ### Class Videos
 
 - [YouTube English](https://www.youtube.com/watch?v=geV-TV7kTgE&ab_channel=PanacloudServerlessSaaSTraining)
