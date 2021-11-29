@@ -7,6 +7,7 @@ import {
   Role,
   ServicePrincipal,
 } from "@aws-cdk/aws-iam";
+import * as lambda from "@aws-cdk/aws-lambda";
 
 export class Step12GrantIamPolicyToResourcesStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -59,5 +60,41 @@ export class Step12GrantIamPolicyToResourcesStack extends cdk.Stack {
 
     // Add policy to role
     role.addToPolicy(policy);
+
+    // Lambda Function
+    const lambda_function = new lambda.Function(this, "LambdaFucntion", {
+      functionName: "Step12-lambda-function",
+      runtime: lambda.Runtime.NODEJS_14_X,
+      code: lambda.Code.fromAsset("lambda"),
+      handler: "index.handler",
+      timeout: cdk.Duration.seconds(10),
+      role: role,
+      environment: {
+        TABLE: dynamoDBTable.tableName,
+      },
+    });
+
+    // Data Source to api
+    const lambda_data_source = api.addLambdaDataSource(
+      "LamdaDataSource",
+      lambda_function
+    );
+
+    // Resolver mapping template reference for Lambda is also being used in it it will customize the way you want the data in your lambda function
+    // NOTE: No need to write response Mapping Template for it if you also want to customize the response then you can write response Mapping Template.
+    lambda_data_source.createResolver({
+      typeName: "Mutation",
+      fieldName: "createData",
+      requestMappingTemplate: appsync.MappingTemplate.fromString(`
+          $util.qr($context.arguments.put("id", $util.defaultIfNull($ctx.arguments.id, $util.autoId())))
+        {
+          "version": "2017-02-28",
+          "operation": "Invoke",
+          "payload": {
+              "arguments": $util.toJson($context.arguments)
+          }
+        }
+      `),
+    });
   }
 }
