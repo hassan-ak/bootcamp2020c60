@@ -1,6 +1,12 @@
 import * as cdk from "@aws-cdk/core";
 import * as appsync from "@aws-cdk/aws-appsync";
 import * as ddb from "@aws-cdk/aws-dynamodb";
+import {
+  Effect,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from "@aws-cdk/aws-iam";
 
 export class Step12GrantIamPolicyToResourcesStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -37,5 +43,21 @@ export class Step12GrantIamPolicyToResourcesStack extends cdk.Stack {
         type: ddb.AttributeType.STRING,
       },
     });
+
+    // Create specific role for lambda function
+    const role = new Role(this, "lambdaRole", {
+      roleName: "Step12-Lambda-Role",
+      assumedBy: new ServicePrincipal("lambda.amazonaws.com"),
+    });
+
+    // Attaching DDB access to policy
+    const policy = new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ["dynamodb:*", "logs:*"],
+      resources: ["*"],
+    });
+
+    // Add policy to role
+    role.addToPolicy(policy);
   }
 }
