@@ -1,15 +1,41 @@
-import * as cdk from '@aws-cdk/core';
-// import * as sqs from '@aws-cdk/aws-sqs';
+import * as cdk from "@aws-cdk/core";
+import * as appsync from "@aws-cdk/aws-appsync";
+import * as ddb from "@aws-cdk/aws-dynamodb";
 
 export class Step12GrantIamPolicyToResourcesStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    // AppSync APi
+    const api = new appsync.GraphqlApi(this, "Step12-GQL-API", {
+      name: "Step12-GQL-API",
+      schema: appsync.Schema.fromAsset("graphql/schema.gql"),
+      authorizationConfig: {
+        defaultAuthorization: {
+          authorizationType: appsync.AuthorizationType.API_KEY,
+          apiKeyConfig: {
+            expires: cdk.Expiration.after(cdk.Duration.days(100)),
+          },
+        },
+      },
+      xrayEnabled: true,
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'Step12GrantIamPolicyToResourcesQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    // Print API URl and Key
+    new cdk.CfnOutput(this, "APIGraphQlURL", {
+      value: api.graphqlUrl,
+    });
+    new cdk.CfnOutput(this, "GraphQLAPIKey", {
+      value: api.apiKey || "",
+    });
+
+    // Create ddb table
+    const dynamoDBTable = new ddb.Table(this, "Table", {
+      tableName: "DDB-Table",
+      partitionKey: {
+        name: "id",
+        type: ddb.AttributeType.STRING,
+      },
+    });
   }
 }
